@@ -1,0 +1,305 @@
+---
+title: 'Exercises: base_r'
+output: html_document
+---
+---
+title: "Exercises"
+author: "David"
+date: "October 7, 2016"
+output: html_document
+---
+
+# Data Types
+```{r}
+class(-123)      # 1
+class(123.456)   # 2
+class("123")     # 3
+class("TRUE")    # 4
+class("female")  # 5
+class(T)         # 6
+class(FALSE)     # 7
+```
+
+# Variables
+```{r}
+x <- 120
+x <- x / 2
+x <- x + 4
+x <- sqrt(x)
+x 
+```
+
+# Math
+```{r}
+x <- 3 * log(2980.958)
+y <- sqrt(1764)
+z <- (exp(7.475339)) / (20^2 - 358)
+
+x
+y
+z
+```
+
+# Logic
+```{r}
+5 < 4                   # 1
+24 >= sqrt(576)         # 2
+!(23 < sqrt(123))       # 3
+((4 - 5) ^ 2 + 1) > 0   # 4
+(T & F) | (T & T)       # 5
+!(!(3 + 5 < 8) | 2 > 5) # 6
+```
+
+# If Statements
+## Cash Register
+```{r}
+product <- "book"
+
+if (product == "book") {
+  print("VAT is 7%")
+} else if (product == "PC") {
+  print("VAT is 19%")
+} else {
+  print("Unknown product")
+}
+```
+
+
+
+## Engineering Flow-chart
+```{r}
+does_it_move <- T
+should_it_move <- F
+
+if (does_it_move){ # it moves
+  if (should_it_move) { # it should move
+    print("Everything fine!")
+  } else { # it shouldnt move
+    print("Use duck tape!")
+  }
+} else { # it doesnt move
+  if (should_it_move) { # it should move
+    print("Use WD-40!")
+  } else {# it shouldnt moce
+  print("Everything fine!")
+  }
+}
+```
+
+
+## Even/Odd-If-Statement
+
+```{r}
+x <- 33
+
+if (x %% 2 == 1) {
+  print(paste(x, "is odd!"))
+} else {
+  print(paste(x, "is even!"))
+}
+```
+
+## Weather Statemet
+
+```{r}
+degrees <- 21
+
+if (degrees < 0) {
+  paste("Yay Snowboarding?!")
+} else if (degrees < 10) {
+  paste("Winter Jacket is advisable!")
+} else if (degrees < 25) {
+  paste("Woop woop Shorts!")
+} else {
+  paste("Ugh, its hell!")
+}
+```
+
+# Vectors
+```{r}
+ppl <- c(67, 98, 85, 1, 71, 59, 55, 49, 79, -99)
+
+# 1. clean the data
+
+ppl2 <- ppl[ppl > 10]
+
+# alternative: recode -99 to 99, throw "1" out
+ppl2_alt <- ppl[ppl != 1]
+
+ppl2_alt <- ifelse(ppl2_alt == -99, 
+                   -ppl2_alt,
+                   ppl2_alt)
+ppl2_alt
+```
+
+```{r}
+# 2. compute variables
+mean(ppl2)
+median(ppl2)
+min(ppl2)
+max(ppl2)
+sd(ppl2)
+var(ppl2)
+
+summary(ppl2)
+```
+
+```{r}
+# mean weight > 67 kgs
+
+mean(ppl2[ppl2 > 67])
+```
+
+# For Loops
+Count the names that have more than 4 letters
+```{r}
+class_names <- c("Alice", "Bob", "Charlie", "Dave")
+
+n_names <- 0
+for (name in class_names) {
+  if (nchar(name) > 4) {
+    n_names <- n_names + 1
+  }
+}
+n_names
+```
+
+
+
+## Vectorised Approach
+```{r}
+sum(nchar(class_names) > 4)
+```
+
+## Calculate
+
+$$ \sum^{10}_{i=0} (3^i - i^3)$$
+
+```{r}
+result <- 0
+
+for (i in 0:10) {
+  result <- result + 3^i - i^3
+}
+result
+```
+## Vectorised Approach
+```{r}
+vec <- 0:10
+sum(3^vec - vec^3)
+```
+
+## Calculate
+
+$$ \sum^{10}_{i=1} \sum^{20}_{j=1} \left(\frac{j^i}{(j - i)^2} + log(j) * i\right) \forall i \neq j$$
+
+```{r}
+result <- 0
+for (i in 1:10) {
+  for (j in 1:20){
+    if (i != j) {
+      result <- result + (j^i) / (j - i)^2 + log(j)*i
+    }
+  }
+}
+result
+```
+
+# Functions
+## greetings
+```{r}
+greetings <- function(name) {
+  print(paste("Welcome", name))
+}
+greetings("Alice")
+```
+```{r}
+greetings2 <- function(name) {
+  cat("Welcome ", name, ", it is nice to meet you!", sep = "")
+}
+greetings2("Bob")
+```
+
+
+## check_values
+```{r}
+# function
+calc_gross <- function(item){
+  # calculates the gross-value for a product
+  if (item$product == "Book") {
+    tax <- 0.07
+  } else {
+    tax <- 0.19
+  }
+  gross <- item$value / (1 + tax)
+  return(gross)
+}
+
+# list of products
+product1 <- list(product = "Book",
+                 value = 87.98)
+product2 <- list(product = "PC",
+                 value = 765.98)
+product3 <- list(product = "Book",
+                 value = 15.02)
+products <- list(product1, 
+                 product2,
+                 product3)
+
+str(products)
+
+for (i in 1:length(products)) {
+  products[[i]]$gross_value <- calc_gross(products[[i]])
+}
+str(products)
+```
+
+## Fact_fun
+```{r}
+fact_fun <- function(n) {
+  result <- 1
+  for (i in 1:n) {
+    result <- result * i
+  }
+  return(result)
+}
+
+fact_fun(5)
+```
+```{r}
+fact_fun2 <- function(n){
+  if (n == 1) {
+    return(n) 
+  } else {
+    return(n * fact_fun2(n - 1))
+  }
+}
+fact_fun2(5)
+```
+```{r}
+fact_fun3 <- function(n) {
+  return(prod(1:n))
+}
+fact_fun3(5)
+```
+
+# Style & Organization
+## From
+```{r, eval=F}
+standardize.Vector.=function(v)
+{x=v-mean(v)
+return(x/sd(x))
+vec=rnorm(1000,mean= 100, sd< -13)
+x <-standardize.Vector.(v=seq(0, 100,length.out=13));
+
+```
+## To
+```{r}
+standardize <- function(input_vec) {
+  std_vec <- (input_vec - mean(input_vec)) / sd(input_vec)
+  return(std_vec)
+}
+vec <- rnorm(1000, mean = 100, sd = 13)
+std_vec <- standardize(input_vec = seq(from = 0, to = 100, length.out = 13))
+std_vec
+```
