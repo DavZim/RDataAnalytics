@@ -1,0 +1,234 @@
+---
+title: 'Exercises: 3_data_visualization'
+author: "David"
+date: "October 9, 2016"
+output: html_document
+---
+```{r, message=FALSE, warning=FALSE}
+library(tibble)
+library(dplyr)
+library(magrittr)
+
+superheroes <- data_frame(hero = c("Batman", "Joker", "Xavier", "Magneto"),
+                          align = c("good", "bad", "good", "bad"),
+                          publisher = c("DC", "DC", "Marvel", "Marvel"))
+
+superheroes
+
+publishers <- data_frame(publisher = c("DC", "Marvel"),
+                         address = c("Burbank (CA)", "NYC (NY)"))
+publishers
+
+
+
+# Add additional data for superheroes and publishers
+superhero_add <- data_frame(hero = "Hellboy",
+                            align = "good",
+                            publisher = "Dark Horse")
+
+superheroes2 <- bind_rows(superheroes, superhero_add)
+
+
+publisher_add <- data_frame(publisher = "Image Comics",
+                            address = "Berkeley (CA)")
+
+publishers2 <- bind_rows(publishers, publisher_add)
+
+superheroes2
+publishers2
+```
+## Merges
+```{r}
+inner_join(superheroes2, publishers2, by = "publisher")
+
+left_join(superheroes2, publishers2, by = "publisher")
+
+right_join(superheroes2, publishers2, by = "publisher")
+
+full_join(superheroes2, publishers2, by = "publisher")
+```
+
+## ggplot2
+```{r, message=FALSE, warning=FALSE}
+# 1, 2, 3, 4, and 5
+library(ggplot2)
+set.seed(812462)
+df <- diamonds %>% sample_n(10000)
+
+df %<>% mutate(vol = x * y * z)
+
+plot1 <- ggplot(df, aes(x = vol, y = price)) + geom_point()
+plot1
+
+plot1 + xlim(c(0, 750))
+
+df %<>% filter(vol < 750)
+plot2 <- ggplot(df, aes(x = vol, y = price, color = clarity, shape = cut)) + geom_point(alpha = 0.5)
+
+plot2
+```
+```{r, eval=F}
+setwd("...")
+ggsave("plot2.png", plot2, width = 7, height = 5, dpi = 300)
+ggsave("plot2.pdf", plot2, width = 7, height = 5)
+```
+## Bar Charts
+```{r}
+ggplot(diamonds, aes(x = cut, fill = clarity)) + geom_bar()
+# equal to
+# ggplot(diamonds, aes(x = cut, fill = clarity)) + geom_bar(position = "stack")
+
+ggplot(diamonds, aes(x = cut, fill = clarity)) + geom_bar(position = "dodge")
+
+ggplot(diamonds, aes(x = price, fill = cut)) + 
+  geom_histogram(bins = 100)
+
+ggplot(diamonds, aes(x = price, fill = cut)) + geom_density(alpha = 0.5, color = NA)
+```
+
+```{r}
+df <- mpg %>% group_by(manufacturer) %>% summarise(avg_cty = mean(cty, na.rm = T))
+df
+
+df2 <- df
+df %<>% mutate(manufacturer = factor(manufacturer, levels = manufacturer[order(avg_cty)]))
+
+ggplot(df, aes(x = manufacturer, y = avg_cty)) +
+       geom_bar(stat = "identity")
+
+ggplot(df2, aes(x = reorder(manufacturer, -avg_cty), y = avg_cty)) + geom_bar(stat = "identity")
+```
+
+
+## Stock Market Data
+```{r, message=FALSE, warning=FALSE}
+library(readr)
+library(tidyr)
+library(fasttime)
+
+url <- "https://raw.githubusercontent.com/DavZim/RDataAnalytics/master/data/stock_data.csv"
+
+stock_data <- read_csv(url)
+
+df_stock <- stock_data %>% gather(key = date, value = price, -ticker)
+df_stock %<>% separate(date, into = c("month", "day", "year")) %>% unite(date, year, month, day, sep = "-") %>% mutate(date = fastPOSIXct(date))
+
+ggplot(df_stock, aes(x = date, y = price, color = ticker)) + geom_line()
+```
+
+# Colors
+```{r}
+library(RColorBrewer)
+brewer.pal(3, "Dark2")
+brewer.pal(9, "RdYlBu")
+```
+
+# Colors and Themes
+```{r}
+n <- 1000
+set.seed(5423)
+df <- data_frame(stock = rep(c("A", "B"), each = n),
+                 date = rep(seq(from = as.Date("2000-01-01"),
+                                by = "day", length.out = n),
+                            2),
+                 return = c(rnorm(n, 0, 1), rnorm(n, 0, 2)))
+
+df %<>% group_by(stock) %>% mutate(price = cumsum(return))
+
+library(ggsci)
+
+plot1 <- ggplot(df, aes(x = date, y = price, color = stock)) + 
+  geom_line() + theme_bw() 
+
+plot1 + scale_color_npg()
+
+plot1 + scale_color_aaas()
+
+plot1 + scale_color_lancet()
+
+plot1 + scale_color_jco()
+
+plot1 + scale_color_ucscgb()
+
+plot1 + scale_color_uchicago()
+
+plot1 + scale_color_simpsons()
+
+plot1 + scale_color_simpsons() + facet_grid(stock~.)
+```
+
+# Functions
+
+```{r}
+df2 <- data_frame(x = rnorm(100))
+
+ggplot(df2, aes(x = x)) + 
+  geom_density() + 
+  stat_function(fun = dnorm, color = "red")
+
+
+# Exercise
+fun1 <- function(x) 2 + 3 * x
+fun2 <- function(x) sin(x) * 60
+fun3 <- function(x) x / 3 + x ^ 2
+
+ggplot(data_frame(x = c(-10, 10)), aes(x = x)) +  
+  stat_function(fun = fun1, aes(color = "2 + 3 * x")) + 
+  stat_function(fun = fun2, aes(color = "sin(x) * 60")) + 
+  stat_function(fun = fun3, aes(color = "x / 3 + x ^ 2")) +
+  labs(color = "Functions", x = "x", y = "f(x)") 
+```
+
+# Maps
+```{r}
+# 1. gather data for US-map
+library(maps)
+usa <- map(database = "usa", plot = F)
+usa_df <- data_frame(x = usa[["x"]], y = usa[["y"]])
+
+world <- map(database = "world2", plot = F)
+world_df <- data_frame(x = world[["x"]], y = world[["y"]])
+
+
+# 2. gather flights-data for map
+library(nycflights13)
+
+# 2.a, airports
+miss_airports_url <- "https://raw.githubusercontent.com/DavZim/RDataAnalytics/master/data/missing_airports.csv"
+missing_airports <- read_csv(miss_airports_url)
+missing_airports
+
+airports2 <- bind_rows(airports, missing_airports)
+
+# 2.b, flights
+df_flights <- flights %>% select(carrier, origin, dest) %>% distinct
+
+# 3 Merging
+# merge destination coordinates
+airports2_1 <- airports2 %>% select(faa, dest_lon = lon, dest_lat = lat)
+
+df <- left_join(df_flights, airports2_1, by = c("dest" = "faa"))
+df
+
+# merge origin coordinates
+airports2_2 <- airports2 %>% select(faa, origin_lon = lon, origin_lat = lat)
+
+df <- left_join(df, airports2_2, by = c("origin" = "faa"))
+df
+```
+## Mapping the map
+```{r}
+ggplot(df) + 
+  geom_polygon(data = usa_df, aes(x = x, y = y), fill = "brown") + 
+  geom_segment(aes(x = dest_lon, xend = origin_lon,
+                   y = dest_lat, yend = origin_lat,
+                   color = carrier), alpha = 0.5, size = 0.5)
+  
+
+
+
+```
+
+
+
+
