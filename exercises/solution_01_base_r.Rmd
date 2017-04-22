@@ -1,0 +1,232 @@
+---
+title: "Solutions to the exervises of part I: base-r"
+author: "David Zimmermann"
+date: "April 21, 2017"
+output: html_document
+---
+
+## 1. Math, Boolean, and Data Types
+### A) Math
+```{r}
+w <- 3 * log(2980.958)
+w
+
+x <- sqrt(1764)
+x
+
+y <- exp(7.475339) / (20^2 - 358)
+y
+
+z <- w^(x - y + 2) - y
+z
+```
+
+### B) Logic/Boolean
+```{r}
+a <- 5 < 4 # equivalent to a <- (5 < 4)
+a
+
+b <- 24 >= sqrt(576)
+b
+
+c <- (4 - 5)^3 + 1 > 0
+c
+
+d <- (T & F) | (T & T)
+d
+
+e <- !(!(3 + 5 < 8) | 2 > 5)
+e
+```
+
+### C) Variables
+```{r}
+f <- 120
+f <- f / 2
+f <- f + 4
+f <- sqrt(f)
+f
+```
+
+### D) Data Types
+```{r}
+g <- -123
+class(g)
+
+h <- "123"
+class(h)
+
+i <- "TRUE"
+class(i)
+
+j <- F
+class(j)
+
+k <- FALSE
+class(k)
+
+l <- 1L
+class(l)
+
+m <- 1 + 1i
+class(m)
+```
+
+## 2. Control Statements
+### 1. Cash Register and engineering flow-chart
+```{r}
+product <- "book"
+
+if (product == "book") {
+  print("VAT is 7%")
+} else if (product == "PC") {
+  print("VAT is 19%")
+} else {
+  print("Unknown product")
+}
+```
+
+### 2. odd or even
+```{r}
+x <- 123
+if (x %% 2 == 0) {
+  print("x is even")
+} else {
+  print("x is odd")
+}
+
+```
+
+### 3. Temperature
+```{r}
+temp <- 23
+
+if (temp < 0) {
+  print("Yay, Snowboarding?!")
+} else  if (temp < 10) {
+  print("Fine mom, I take a jacket!")
+} else if (temp < 20) {
+  print("Yay, Shorts!")
+} else if (temp < 25) {
+  print("Uhm, can I just stay indoors, where the aircon is?")
+} else {
+  print("You cannot be serious, what if I melt?")
+}
+```
+
+## 3. Data Structures
+```{r}
+vec <- c(67, 98, 85, 1, 71, 59, 55, 49, 79, -99)
+# 1. clean the data
+vec <- vec[vec > 10]
+
+# 2. find metrics
+mean(vec)
+max(vec)
+min(vec)
+median(vec)
+sd(vec)
+
+# 3. mean weight weight > 67
+mean(vec[vec > 67])
+```
+
+## 4. For Loops
+```{r}
+# 1. class-names
+class_names <- c("Alice", "Bob", "Charlie", "Dave")
+num_long_names <- 0
+
+for (name in class_names) {
+  if (nchar(name) > 4) {
+    num_long_names <- num_long_names + 1
+  }
+}
+
+print(sprintf("We have a total of %d students with more than 4 letters.", num_long_names))
+
+# 2. calculation 1
+val1 <- 0
+for (i in 0:10) {
+  val1 <- val1 + 3^i - i^3
+}
+val1
+
+# vectorised
+i <-  0:10
+val1_vec <- sum(3^i - i^3)
+val1_vec
+
+# 3. calculation 2
+val2 <- 0
+for (i in 0:10) {
+  for (j in 0:20) {
+    val2 <- val2 + j^2/(j - i + 0.5)^2 + log(j)*i
+  }
+}
+val2 # why is it NaN?!
+```
+
+## 5. Functions
+```{r}
+# 1. greetings
+greetings <- function(name) {
+  print(sprintf("Hello %s, how are you doing?", name))
+}
+greetings("David")
+
+greetings2 <- function(name) {
+  print(paste("Hello", name, "how are you doing?"))
+}
+greetings2("Alice")
+
+# 2. list_file_by_ext
+
+list_file_by_ext <- function(ext) {
+  files <- list.files()
+  # i.e., file_endings <- ".csv"
+  file_endings <- substr(files, nchar(files) - nchar(ext) + 1, nchar(files))
+  files_select <- files[file_endings == ext]
+  return(files_select)
+}
+
+list_file_by_ext("html")
+# alternative:
+list.files(pattern = "html")
+
+# 3. fact_fun
+fact_fun <- function(n) {
+  ret <- 1
+  
+  for (i in 1:n) {
+    ret <- ret * i
+    
+  }
+  return(ret)
+}
+fact_fun(10)
+```
+
+## 6. Libraries
+```{r, eval=F}
+install.packages(c("tibble", "readr", "dplyr", "nycflights13", "ggplot2", "scales"))
+```
+
+Bermudan Swaption: i.e., `RQuantLib`, `fOptions` 
+
+Map: i.e., `ggmaps`, `maps`, `leaflet`
+
+
+## 7. Style and Organization
+```{r}
+standardize_vector <- function(vec) {
+  de_meaned <- vec - mean(vec)
+  ret_vec <- de_meaned / sd(de_meaned)
+  return(ret_vec)
+}
+
+vec <- rnorm(1000, mean = 100, sd = 13) 
+x <- standardize_vector(vec)
+x2 <- standardize_vector(seq(0, 100, length.out = 13))
+```
+
