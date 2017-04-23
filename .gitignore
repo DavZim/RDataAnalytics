@@ -2,3 +2,6 @@
 *.Rproj.user
 *.Rhistory
 .Rproj.user
+exercises/*_cache
+exercises/*_files
+*.gif
