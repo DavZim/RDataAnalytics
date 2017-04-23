@@ -1,0 +1,190 @@
+---
+title: "Solutions to the exervises of part II: data munging"
+author: "David Zimmermann"
+date: "April 22, 2017"
+output: html_document
+---
+
+# 1. Piping
+
+```{r, message=FALSE, warning=FALSE}
+library(dplyr) # for the pipe operator
+rnorm(100, mean = 10, sd = 1) %>% 
+  sqrt() %>% 
+  mean() %>% 
+  log()
+
+mat <- rnorm(36, mean = 10, sd = 3) %>% matrix(ncol = 6)
+
+standardize <- function(x) (x - mean(x)) / sd(x)
+
+mat %>% standardize()
+
+# same result but not as "elegant" as the version with the function
+mat %>% {(. - mean(.)) / sd(.)}
+
+c("Alice", "Bob") %>%  rep(each = 2) %>% paste("Hi", ., "with", nchar(.), "letters")
+```
+
+# 1.b MWE
+```{r, eval=F}
+# the same error can be replicated by 
+
+# a.
+if (1:3 > 0) {
+  print("This if-clause causes the error")
+  # if requires only a single value; 1:3 > 0 returns three elements... only the first will be used
+}
+
+# b.
+if (all(c(NA, T))) {
+  print("This if-clause causes the error")
+  # all(NA) returns NA (not logically evaluatable by an if-statement)
+}
+
+# c.
+x <- 1:2
+if (x[F]) {
+  print("This if-clause causes the error")
+  # x[F] returns integer(0) or logical(0), it cannot be evaluated by an if-statement
+}
+```
+
+# 2. data_frames and tibbles
+```{r}
+tickers <- c("AAA", "BBB", "CCC")
+days <- 1:10
+
+df <- tibble(
+  ticker = rep(tickers, each = 10),
+  date = rep(days, 3),
+  return = rnorm(10*3)
+)
+df
+```
+
+```{r,eval=F}
+View(df)
+```
+
+```{r}
+df[df$ticker == "CCC",]
+# dplyr::filter way better and more logical
+```
+
+# 3. Data Import/Export
+```{r}
+library(readr)
+
+# ".." says: go one folder up, "../data" means go one folder up, then go into the folder "data""
+df1 <- read_csv("../data/iris.csv")
+df2 <- read_csv("https://raw.githubusercontent.com/DavZim/RDataAnalytics/master/data/iris.csv")
+df1
+df2
+```
+
+# 4. Tidy Data
+```{r}
+library(tidyr)
+df <- read_csv("https://raw.githubusercontent.com/DavZim/RDataAnalytics/master/data/stock_data.csv")
+
+df_long <- df %>% gather(key = date, value = price, -ticker)
+
+# the "." needs to be escaped, otherwise it will be interpreted as regex
+df_long <- df_long %>% separate(col = date, into = c("day", "month", "year"), sep = "\\.")
+df_long
+
+df_long <- df_long %>% unite(col = "date_tidy", year, month, day, sep = "-")
+df_long
+```
+
+# 5. Data Manipulation
+```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(nycflights13)
+
+# get familiar with the dataset
+flights %>% glimpse()
+
+# flights %>% View()
+
+# 1. find the operator with the most flights
+flights %>% 
+  group_by(carrier) %>% 
+  summarise(n_flights = n()) %>% 
+  arrange(desc(n_flights)) # %>% top_n(1) # if you only want to select the first
+
+# 2. most frequently used origin airport
+flights %>% 
+  group_by(origin) %>% 
+  summarise(n_flights = n()) %>% 
+  arrange(desc(n_flights)) # %>% top_n(1) # if you only want to select the first
+
+# 3. destination with the longest arrival delay
+# p1. longest total arrival delay
+flights %>% 
+  filter(arr_delay == max(arr_delay, na.rm = T)) %>% 
+  select(dest)
+
+# p2. longest average arrival delay
+flights %>% 
+  group_by(dest) %>% 
+  summarise(avg_arr_delay = mean(arr_delay, na.rm = T)) %>% 
+  arrange(desc(avg_arr_delay)) # %>% top_n(1) # if you only want to select the first
+
+# 4. the day with the least arrival delay
+# p1. least total arrival delay
+flights %>% 
+  filter(arr_delay == min(arr_delay, na.rm = T)) %>% 
+  select(year, month, day)
+
+# p2. the least average arrival delay
+flights %>% 
+  group_by(year, month, day) %>% 
+  summarise(avg_arr_delay = mean(arr_delay, na.rm = T)) %>% 
+  arrange(avg_arr_delay)
+  
+```
+
+# 6. Joins
+The missing data is already gathered in `data/missing_airports.csv`.
+
+```{r}
+library(dplyr)
+library(nycflights13)
+library(readr)
+
+# load the missing airports
+df_missing_airports <- read_csv("https://raw.githubusercontent.com/DavZim/RDataAnalytics/master/data/missing_airports.csv")
+
+# add the missing airports to the data_frame
+df_airports <- rbind(airports %>% select(faa, lat, lon), 
+                     df_missing_airports %>% select(faa, lat, lon))
+
+# prepare the flights dataset
+df_flights <- flights %>% 
+  select(origin, dest)
+
+# prepare the origin location
+df_origin <- df_airports %>% 
+  select(origin = faa, 
+         origin_lat = lat,
+         origin_lon = lon)
+
+# prepare the destination location
+df_dest <- df_airports %>% 
+  select(dest = faa, 
+         dest_lat = lat,
+         dest_lon = lon)
+
+# combine the location information of the origin to the df_flights dataset
+df_flights <- left_join(df_flights, df_origin, by = "origin")
+
+# combine the location information of the destination to the df_flights dataset
+df_flights <- left_join(df_flights, df_dest, by = "dest")
+
+df_flights
+summary(df_flights)
+```
+
+
